@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import os
+import warnings
 from typing import Optional
 
 from dotenv import load_dotenv
 import google.generativeai as genai
+
+warnings.filterwarnings(
+    "ignore",
+    message="All support for the `google.generativeai` package has ended.*",
+    category=FutureWarning,
+)
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"

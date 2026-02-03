@@ -15,6 +15,23 @@ def _load_system_prompt() -> str:
     return PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
+def contains_investment_language(text: str) -> bool:
+    """Check for banned investment or trading language."""
+    banned_terms = [
+        "buy",
+        "sell",
+        "hold",
+        "bullish",
+        "bearish",
+        "price target",
+        "moon",
+        "guaranteed returns",
+        "financial advice",
+    ]
+    text_lower = text.lower()
+    return any(term in text_lower for term in banned_terms)
+
+
 def summarize_whitepaper(whitepaper_text: str) -> str:
     """Apply the summary prompt and return the structured summary."""
     if not whitepaper_text.strip():
@@ -26,4 +43,15 @@ def summarize_whitepaper(whitepaper_text: str) -> str:
         "WHITEPAPER TEXT:\n"
         f"{whitepaper_text}"
     )
-    return generate_text(user_prompt)
+    summary = generate_text(user_prompt)
+
+    if contains_investment_language(summary):
+        retry_prompt = (
+            f"{user_prompt}\n\n"
+            "IMPORTANT: The previous output contained banned investment language. "
+            "You must regenerate the summary and strictly avoid all investment or "
+            "trading terms."
+        )
+        summary = generate_text(retry_prompt)
+
+    return summary

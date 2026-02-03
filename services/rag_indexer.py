@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List
 
 os.environ.setdefault("CHROMA_TELEMETRY", "FALSE")
+os.environ.setdefault("POSTHOG_DISABLED", "1")
 
 import chromadb
 from chromadb.config import Settings
@@ -16,6 +17,11 @@ from services.sectionizer import iter_lines_with_section
 
 
 CHROMA_DIR = Path("data/chroma")
+
+
+class _NoOpEmbeddingFunction:
+    def __call__(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] for _ in texts]
 
 
 def _safe_collection_name(doc_id: str) -> str:
@@ -49,6 +55,7 @@ def build_or_load_index(doc_id: str) -> chromadb.Collection:
     return client.get_or_create_collection(
         name=_safe_collection_name(doc_id),
         metadata={"hnsw:space": "cosine"},
+        embedding_function=_NoOpEmbeddingFunction(),
     )
 
 
@@ -90,6 +97,7 @@ def index_document(doc_id: str, pages: List[Dict[str, object]]) -> None:
     collection = client.get_or_create_collection(
         name=_safe_collection_name(doc_id),
         metadata={"hnsw:space": "cosine"},
+        embedding_function=_NoOpEmbeddingFunction(),
     )
     try:
         collection.delete(where={"doc_id": doc_id})
